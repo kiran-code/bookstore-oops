@@ -27,6 +27,52 @@ function UI(){
 
 }
 
+// Storage Constructor
+function Storage(){
+
+}
+
+Storage.prototype.getBooks = function(){
+  let books;
+
+  if(localStorage.getItem('books') === null) {
+    books = []
+  } else {
+    books = JSON.parse(localStorage.getItem('books'));
+  } 
+
+  return books;
+}
+
+Storage.prototype.displayBooks = function() {
+  const books = Storage.prototype.getBooks();
+  const ui = new UI();
+  books.forEach(book => {
+    if(book !== null ){
+      ui.addBookToStore(book);
+    }
+  });
+}
+
+Storage.prototype.addBook = function(book) {
+  const books = Storage.prototype.getBooks();
+  books.push(book);
+
+  localStorage.setItem('books', JSON.stringify(books));
+}
+
+Storage.prototype.removeBook = function(isbn){
+  const books = Storage.prototype.getBooks();
+
+  books.forEach((book, index) => {
+    if(book.isbn === isbn){
+      books.splice(index, 1);
+    }
+  });
+
+  localStorage.setItem('books', JSON.stringify(books));
+}
+
 UI.prototype.addBookToStore = function(book){
   const bookStore = document.querySelector('#book-store');
 
@@ -54,8 +100,16 @@ UI.prototype.showMessage = function(message, className){
   //   document.querySelector('#message').removeAttribute('class');
   // }, 3000);
 
+  let timer = 3000;
   // Creaet div
   const div = document.createElement('div');
+
+  
+  if(document.querySelector(`.alert`) !== null){
+    timer += 1000;
+    return;
+  }
+
   div.className = `alert ${className}`
   div.appendChild(document.createTextNode(message));
   
@@ -67,7 +121,7 @@ UI.prototype.showMessage = function(message, className){
   // Destroy message div after 3 seconds
   setTimeout(function(){
    document.querySelector(`.${className}`).remove();
-  },3000);
+  },timer);
 }
 
 UI.prototype.deleteBookFromStore = function(target){
@@ -75,6 +129,9 @@ UI.prototype.deleteBookFromStore = function(target){
    target.parentElement.parentElement.remove();
  }
 }
+
+// DOM Load Event
+document.addEventListener('DOMContentLoaded', Storage.prototype.displayBooks());
 
 // Event Listeners
 document.getElementById('book-form').addEventListener('submit', function(e){
@@ -86,16 +143,14 @@ document.getElementById('book-form').addEventListener('submit', function(e){
         
   // Create Book Object      
   const book = new Book(title, author, isbn);
-  console.log(book);
   // Create UI Object
   const ui = new UI();
-  console.log(ui);
   // Validate
   if(title === '' || author === '' || isbn === ''){
-    console.log('null');
     ui.showMessage('Please fill in all fields', 'error');  
   } else { 
     ui.addBookToStore(book);
+    Storage.prototype.addBook(book);
     ui.showMessage('Added Book to the store', 'success');
     ui.clearFields();
   }
@@ -109,5 +164,6 @@ document.getElementById('book-store').addEventListener('click', function(e){
 
   // Delete book from the book store
   ui.deleteBookFromStore(e.target);
+  Storage.prototype.removeBook(e.target.parentElement.previousElementSibling.textContent);
   ui.showMessage('Book Removed', 'success');
 })
